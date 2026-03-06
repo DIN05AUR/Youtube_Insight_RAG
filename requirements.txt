@@ -1,0 +1,14 @@
+# ── Core RAG pipeline ─────────────────────────────────────────
+youtube-transcript-api>=0.6.0
+langchain-core
+langchain-text-splitters
+langchain-community
+langchain-huggingface
+langchain-ollama
+deep-translator
+sentence-transformers
+faiss-cpu
+
+# ── Web server ─────────────────────────────────────────────────
+fastapi
+uvicorn[standard]

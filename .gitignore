@@ -1,0 +1,26 @@
+# ── Generated files ───────────────────────────────────────────
+faiss_index/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── HuggingFace model cache ───────────────────────────────────
+.cache/
+~/.cache/huggingface/
+
+# ── Python environments ───────────────────────────────────────
+venv/
+.venv/
+env/
+.env
+
+# ── OS noise ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp

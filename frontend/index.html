@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YouTube Insight RAG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+
+/* ── Themes ─────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:           #0c0c10;
+  --bg2:          #13131a;
+  --bg3:          #1c1c26;
+  --border:       #2a2a38;
+  --accent:       #f0a500;
+  --accent-glow:  #f0a50030;
+  --accent-text:  #0c0c10;
+  --border-focus: #f0a500;
+  --green:        #2ecc8a;
+  --red:          #f06060;
+  --text:         #eeecea;
+  --text-2:       #8888a0;
+  --text-3:       #44444f;
+  --shadow:       0 2px 8px rgba(0,0,0,0.6);
+  --bubble-user-bg:    #f0a500;
+  --bubble-user-text:  #0c0c10;
+  --bubble-ai-bg:      #1c1c26;
+  --bubble-ai-text:    #eeecea;
+  --bubble-ai-border:  #2a2a38;
+  --source-bg:    #13131a;
+  --source-hover: #1c1c26;
+  --logo-tag-bg:  #f0a50018;
+  --logo-tag-border: #f0a50050;
+  --sys-color:    #2ecc8a;
+  --think-dot:    #f0a500;
+  --strong-color: #f0a500;
+  --msg-user-align: flex-end;
+  --scrollbar: #2a2a38;
+  --progress-bg: #1c1c26;
+}
+
+[data-theme="light"] {
+  --bg:           #f4f5f9;
+  --bg2:          #ffffff;
+  --bg3:          #eaecf4;
+  --border:       #dce0ee;
+  --accent:       #2563eb;
+  --accent-glow:  #2563eb20;
+  --accent-text:  #ffffff;
+  --border-focus: #2563eb;
+  --green:        #16a34a;
+  --red:          #dc2626;
+  --text:         #0f1117;
+  --text-2:       #5a6278;
+  --text-3:       #9aa0b8;
+  --shadow:       0 2px 8px rgba(15,17,26,0.08);
+  --bubble-user-bg:    #2563eb;
+  --bubble-user-text:  #ffffff;
+  --bubble-ai-bg:      #ffffff;
+  --bubble-ai-text:    #0f1117;
+  --bubble-ai-border:  #dce0ee;
+  --source-bg:    #f4f5f9;
+  --source-hover: #eff4ff;
+  --logo-tag-bg:  #dbeafe;
+  --logo-tag-border: #bfdbfe;
+  --sys-color:    #16a34a;
+  --think-dot:    #2563eb;
+  --strong-color: #1d4ed8;
+  --scrollbar: #dce0ee;
+  --progress-bg: #dce0ee;
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Lato', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.22s, color 0.22s;
+}
+
+/* ── App Shell ──────────────────────────────────────────── */
+#app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+
+.logo-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  background: var(--logo-tag-bg);
+  border: 1px solid var(--logo-tag-border);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+/* NEW FONT — Bricolage Grotesque: tall, condensed, very readable */
+.logo-name {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.logo-sub {
+  font-family: 'Lato', sans-serif;
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+/* Theme toggle */
+.theme-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text-2);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Status pill */
+.status-pill {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em;
+  padding: 4px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text-2);
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-3); flex-shrink: 0;
+  transition: background 0.2s;
+}
+.status-pill.processing .status-dot { background: var(--accent); animation: pulse 1.2s infinite; }
+.status-pill.ready      .status-dot { background: var(--green); }
+.status-pill.error      .status-dot { background: var(--red); }
+
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%     { opacity:.3; transform:scale(.6); }
+}
+
+/* ── Main ───────────────────────────────────────────────── */
+main {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  padding: 14px 0; gap: 10px; min-height: 0;
+}
+
+/* ── URL Panel ──────────────────────────────────────────── */
+#url-panel { display: flex; flex-direction: column; gap: 7px; }
+
+.panel-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+}
+
+.url-row { display: flex; gap: 8px; }
+
+.text-input {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-shadow: var(--shadow);
+}
+.text-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.text-input::placeholder { color: var(--text-3); }
+.text-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.url-row .text-input {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 10px 14px;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  position: relative;
+}
+
+/* ── AI Glow Button — Analyse ────────────────────────────
+   Subtle breathing glow using accent color only.
+   NOT rgb rainbow — just a clean pulsing aura.         */
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow:
+    0 0 0 0 var(--accent-glow),
+    0 2px 8px var(--accent-glow);
+  animation: aiGlow 2.8s ease-in-out infinite;
+}
+
+@keyframes aiGlow {
+  0%,100% {
+    box-shadow:
+      0 0 8px 0px var(--accent-glow),
+      0 2px 12px var(--accent-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 18px 4px var(--accent-glow),
+      0 4px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  animation: none;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.btn-primary:active { transform: translateY(0); filter: brightness(.94); }
+.btn-primary:disabled {
+  opacity:.4; cursor:not-allowed;
+  transform:none; filter:none;
+  animation: none;
+  box-shadow: none;
+}
+
+/* ── Progress ───────────────────────────────────────────── */
+#progress-area { display:none; flex-direction:column; gap:7px; }
+#progress-area.visible { display:flex; }
+
+.progress-track {
+  width: 100%; height: 3px;
+  background: var(--progress-bg);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  border-radius: 3px;
+  animation: indet 1.8s ease-in-out infinite;
+}
+@keyframes indet {
+  0%   { width:0%;  margin-left:0; }
+  50%  { width:60%; margin-left:20%; }
+  100% { width:0%;  margin-left:100%; }
+}
+.progress-msg {
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+
+/* ── Video Badge ────────────────────────────────────────── */
+#video-badge {
+  display: none; align-items: center; justify-content: space-between;
+  gap: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow);
+}
+#video-badge.visible { display:flex; }
+
+.badge-url {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1; min-width: 0;
+}
+.badge-url a { color: var(--accent); text-decoration:none; }
+.badge-url a:hover { text-decoration:underline; }
+
+.badge-actions { display:flex; gap:6px; flex-shrink:0; }
+
+.btn-sm {
+  font-size: 11px; font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  padding: 5px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text-2);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-sm:hover { border-color: var(--red); color: var(--red); background: var(--bg2); }
+
+/* ── Chat Area ──────────────────────────────────────────── */
+#chat-area {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+  gap: 4px; min-height: 0;
+  padding: 4px 2px 4px 2px;
+}
+#chat-area::-webkit-scrollbar { width: 4px; }
+#chat-area::-webkit-scrollbar-track { background: transparent; }
+#chat-area::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
+
+/* ── Empty State ────────────────────────────────────────── */
+#empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; text-align: center;
+  padding: 40px 20px; user-select: none;
+}
+.empty-icon  { font-size: 36px; opacity:.25; line-height:1; }
+.empty-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-2); }
+.empty-sub   { font-size: 12px; color: var(--text-3); line-height: 1.7; }
+
+/* ── Chat Bubbles ───────────────────────────────────────── */
+
+/* Row wrapper — controls left/right alignment */
+.msg {
+  display: flex;
+  animation: msgIn 0.2s ease forwards;
+  padding: 2px 0;
+}
+.msg.user { justify-content: flex-end; }
+.msg.bot  { justify-content: flex-start; }
+
+@keyframes msgIn {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* The actual bubble */
+.bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.68;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+/* User bubble — accent color, right side, top-right corner sharp */
+.msg.user .bubble {
+  background: var(--bubble-user-bg);
+  color: var(--bubble-user-text);
+  border-bottom-right-radius: 4px;
+  font-weight: 500;
+}
+
+/* AI bubble — subtle bg, left side, top-left corner sharp */
+.msg.bot .bubble {
+  background: var(--bubble-ai-bg);
+  color: var(--bubble-ai-text);
+  border: 1px solid var(--bubble-ai-border);
+  border-bottom-left-radius: 4px;
+}
+
+/* AI label above bubble */
+.msg.bot  .bubble-wrap { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; max-width: 78%; }
+.msg.user .bubble-wrap { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; max-width: 78%; }
+
+.bubble-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  padding: 0 4px;
+}
+.msg.bot  .bubble-label { color: var(--think-dot); opacity: 0.7; }
+.msg.user .bubble-label { color: var(--text-3); }
+
+/* Markdown inside AI bubble */
+.bubble p { margin: 4px 0; }
+.bubble p:first-child { margin-top: 0; }
+.bubble p:last-child  { margin-bottom: 0; }
+.bubble ul, .bubble ol {
+  margin: 6px 0 6px 18px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.bubble li { line-height: 1.62; }
+.bubble strong {
+  font-weight: 700;
+  color: var(--strong-color);
+}
+.msg.user .bubble strong { color: var(--bubble-user-text); opacity: 0.9; }
+
+/* ── Streaming cursor ───────────────────────────────────────── */
+.stream-cursor {
+  display: inline-block;
+  color: var(--accent);
+  animation: cursorBlink 0.7s step-end infinite;
+  font-weight: 400;
+  margin-left: 1px;
+}
+@keyframes cursorBlink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ── Sources ─────────────────────────────────────────────── */
+.sources { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.sources-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-3);
+  margin-bottom: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.source-chip {
+  display: flex; align-items: flex-start; gap: 9px;
+  background: var(--source-bg);
+  border: 1px solid var(--bubble-ai-border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  text-decoration: none;
+  transition: border-color .15s, background .15s;
+}
+.source-chip:hover { background: var(--source-hover); border-color: var(--accent); }
+.source-ts {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-glow);
+  padding: 2px 6px; border-radius: 4px;
+  flex-shrink: 0;
+}
+.source-preview {
+  font-size: 12px; color: var(--text-2); line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ── Thinking Dots ───────────────────────────────────────── */
+.thinking { display:flex; align-items:center; gap:4px; padding:2px 0; }
+.thinking span {
+  width:6px; height:6px; border-radius:50%;
+  background: var(--think-dot);
+  animation: blink 1.3s ease infinite;
+}
+.thinking span:nth-child(2) { animation-delay:.22s; }
+.thinking span:nth-child(3) { animation-delay:.44s; }
+@keyframes blink {
+  0%,100% { opacity:.2; transform:scale(.75); }
+  50%     { opacity:1;  transform:scale(1.15); }
+}
+
+/* ── System / Error ──────────────────────────────────────── */
+.sys-msg {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--sys-color);
+  padding: 5px 10px;
+  letter-spacing: .04em;
+  text-align: center;
+  opacity: .85;
+}
+.error-msg {
+  font-size: 12px; color: var(--red);
+  padding: 9px 13px;
+  background: color-mix(in srgb, var(--red) 8%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--red) 22%, var(--bg));
+  border-radius: 9px;
+  margin: 3px 0;
+  align-self: center;
+  max-width: 90%;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer {
+  padding: 10px 0 18px;
+  border-top: 1px solid var(--border);
+}
+.question-row { display:flex; gap:8px; }
+.question-row .text-input {
+  flex: 1;
+  font-family: 'Lato', sans-serif;
+  font-size: 14px;
+  padding: 11px 16px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span class="logo-tag">RAG</span>
+      <div>
+        <span class="logo-name">YouTube Insight RAG</span>
+        <span class="logo-sub"> — chat with any video</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-pill" id="status-pill">
+        <div class="status-dot"></div>
+        <span id="status-text">IDLE</span>
+      </div>
+      <button class="theme-btn" id="theme-btn" title="Toggle light / dark" onclick="toggleTheme()">🌙</button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main>
+
+    <div id="url-panel">
+      <div class="panel-label">YouTube URL</div>
+      <div class="url-row">
+        <input class="text-input" type="text" id="url-input"
+               placeholder="https://youtube.com/watch?v=..."
+               autocomplete="off" spellcheck="false" />
+        <button class="btn btn-primary" id="load-btn" onclick="loadVideo()">Analyse ✦</button>
+      </div>
+    </div>
+
+    <div id="progress-area">
+      <div class="progress-track"><div class="progress-fill"></div></div>
+      <div class="progress-msg" id="progress-msg">Starting...</div>
+    </div>
+
+    <div id="video-badge">
+      <span class="badge-url">▶&nbsp;<a id="badge-link" href="#" target="_blank" rel="noopener"></a></span>
+      <div class="badge-actions">
+        <button class="btn-sm" onclick="newVideo()">↺ New Video</button>
+        <button class="btn-sm" onclick="killSession()">✕ End</button>
+      </div>
+    </div>
+
+    <div id="chat-area">
+      <div id="empty-state">
+        <div class="empty-icon">▶</div>
+        <div class="empty-title">No video loaded yet</div>
+        <div class="empty-sub">Paste a YouTube URL above and hit Analyse.<br>Then ask anything about the video.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="question-row">
+      <input class="text-input" type="text" id="question-input"
+             placeholder="Ask something about the video…"
+             disabled autocomplete="off"
+             onkeydown="if(event.key==='Enter') askQuestion()" />
+      <button class="btn btn-primary" id="ask-btn" onclick="askQuestion()" disabled>Ask</button>
+    </div>
+  </footer>
+
+</div>
+<script>
+let pollTimer = null;
+let isAsking  = false;
+
+const urlInput      = document.getElementById('url-input');
+const loadBtn       = document.getElementById('load-btn');
+const progressArea  = document.getElementById('progress-area');
+const progressMsg   = document.getElementById('progress-msg');
+const videoBadge    = document.getElementById('video-badge');
+const badgeLink     = document.getElementById('badge-link');
+const chatArea      = document.getElementById('chat-area');
+const emptyState    = document.getElementById('empty-state');
+const questionInput = document.getElementById('question-input');
+const askBtn        = document.getElementById('ask-btn');
+const statusPill    = document.getElementById('status-pill');
+const statusText    = document.getElementById('status-text');
+const themeBtn      = document.getElementById('theme-btn');
+
+// ── Theme ─────────────────────────────────────────────────
+function toggleTheme() {
+  const html   = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const next   = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('yt-insight-theme', next);
+}
+(function () {
+  const saved = localStorage.getItem('yt-insight-theme');
+  if (saved) { document.documentElement.setAttribute('data-theme', saved); themeBtn.textContent = saved === 'dark' ? '🌙' : '☀️'; }
+})();
+
+function setStatus(state, label) {
+  statusPill.className   = 'status-pill ' + state;
+  statusText.textContent = label.toUpperCase();
+}
+
+// ── Load Video ────────────────────────────────────────────
+async function loadVideo() {
+  const url = urlInput.value.trim();
+  if (!url) { urlInput.focus(); return; }
+  loadBtn.disabled = urlInput.disabled = true;
+  progressArea.classList.add('visible');
+  videoBadge.classList.remove('visible');
+  setStatus('processing', 'Processing');
+  try {
+    const resp = await fetch('/api/process', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ url }),
+    });
+    if (!resp.ok) { const e = await resp.json(); showError(e.detail||'Failed.'); resetInputUI(); return; }
+    startPolling();
+  } catch(e) { showError('Cannot reach API. Is the server running?'); resetInputUI(); }
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollStatus, 1500);
+}
+
+async function pollStatus() {
+  try {
+    const data = await (await fetch('/api/status')).json();
+    progressMsg.textContent = data.progress_msg || '...';
+    if      (data.status==='ready') { clearInterval(pollTimer); onReady(data.video_url); }
+    else if (data.status==='error') { clearInterval(pollTimer); showError(data.error_msg||'Error.'); resetInputUI(); setStatus('error','Error'); }
+  } catch(_) {}
+}
+
+function onReady(videoUrl) {
+  progressArea.classList.remove('visible');
+  videoBadge.classList.add('visible');
+  badgeLink.href = badgeLink.textContent = videoUrl;
+  questionInput.disabled = askBtn.disabled = false;
+  urlInput.disabled = loadBtn.disabled = true;
+  setStatus('ready', 'Ready');
+  clearChat();
+  addSystemMsg('Video loaded — ask me anything about it.');
+  questionInput.focus();
+}
+
+// ── Ask (streaming) ──────────────────────────────────────
+async function askQuestion() {
+  const q = questionInput.value.trim();
+  if (!q || isAsking) return;
+  isAsking = true;
+  questionInput.value = '';
+  questionInput.disabled = askBtn.disabled = true;
+  hideEmpty();
+  appendUserBubble(q);
+  const tid = appendThinking();
+
+  try {
+    const resp = await fetch('/api/ask-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q }),
+    });
+
+    removeThinking(tid);
+
+    if (!resp.ok) {
+      appendErrorMsg((await resp.json()).detail || 'Error.');
+    } else {
+      // Create an empty bot bubble and stream tokens into it
+      const bubbleId = createStreamingBubble();
+      const reader   = resp.body.getReader();
+      const decoder  = new TextDecoder();
+      let buffer  = '';
+      let rawText = '';   // accumulates full plain text as it streams in
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE lines are separated by double newlines
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop();  // keep incomplete last chunk
+
+        for (const part of parts) {
+          if (!part.startsWith('data: ')) continue;
+          let data;
+          try { data = JSON.parse(part.slice(6)); } catch { continue; }
+
+          if (data.error) {
+            appendErrorMsg(data.error);
+            break;
+          }
+
+          if (data.token !== undefined) {
+            // Append token to raw text and update bubble with plain text
+            // (full markdown render happens at the end once text is complete)
+            rawText += data.token;
+            updateStreamingBubble(bubbleId, rawText);
+          }
+
+          if (data.done) {
+            // Streaming finished — do final markdown render + attach sources
+            finalizeStreamingBubble(bubbleId, rawText, data.sources);
+          }
+        }
+      }
+    }
+
+  } catch(e) {
+    removeThinking(tid);
+    appendErrorMsg('Could not reach the API.');
+  }
+
+  isAsking = false;
+  questionInput.disabled = askBtn.disabled = false;
+  questionInput.focus();
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// ── New / Kill ────────────────────────────────────────────
+async function newVideo() {
+  if (!confirm('Load a new video? Current chat will be cleared.')) return;
+  await doReset(); urlInput.value = ''; urlInput.focus();
+}
+async function killSession() {
+  if (!confirm('End this session?')) return;
+  await doReset(); urlInput.value = '';
+}
+async function doReset() {
+  try { await fetch('/api/reset', { method:'POST' }); } catch(_) {}
+  if (pollTimer) clearInterval(pollTimer);
+  progressArea.classList.remove('visible');
+  videoBadge.classList.remove('visible');
+  urlInput.disabled = loadBtn.disabled = false;
+  questionInput.disabled = askBtn.disabled = true;
+  questionInput.value = '';
+  setStatus('idle','Idle');
+  clearChat();
+}
+
+// ── Chat Helpers ──────────────────────────────────────────
+function hideEmpty()  { emptyState.style.display = 'none'; }
+function clearChat()  { chatArea.innerHTML = ''; chatArea.appendChild(emptyState); emptyState.style.display = ''; }
+
+function addSystemMsg(text) {
+  hideEmpty();
+  const d = document.createElement('div');
+  d.className = 'sys-msg'; d.textContent = '✓ ' + text;
+  chatArea.appendChild(d);
+}
+
+function appendUserBubble(text) {
+  hideEmpty();
+  const row = document.createElement('div');
+  row.className = 'msg user';
+  row.innerHTML = `
+    <div class="bubble-wrap">
+      <span class="bubble-label">YOU</span>
+      <div class="bubble">${escHtml(text)}</div>
+    </div>`;
+  chatArea.appendChild(row);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function appendBotBubble(answer, sources) {
+  hideEmpty();
+  let srcs = '';
+  if (sources && sources.length) {
+    srcs = '<div class="sources"><div class="sources-label">Sources in video</div>' +
+      sources.map(s =>
+        `<a class="source-chip" href="${s.yt_link.replace(/"/g,'%22')}" target="_blank" rel="noopener">
+          <span class="source-ts">${escHtml(s.timestamp)}</span>
+          <span class="source-preview">${escHtml(s.preview)}</span>
+        </a>`
+      ).join('') + '</div>';
+  }
+  const row = document.createElement('div');
+  row.className = 'msg bot';
+  row.innerHTML = `
+    <div class="bubble-wrap">
+      <span class="bubble-label">AI</span>
+      <div class="bubble">${renderMarkdown(answer)}${srcs}</div>
+    </div>`;
+  chatArea.appendChild(row);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// ── Streaming bubble helpers ─────────────────────────────
+// createStreamingBubble() — creates an empty bot bubble, returns its ID
+// updateStreamingBubble() — updates bubble text as tokens arrive (plain text)
+// finalizeStreamingBubble() — final markdown render + sources when done
+
+function createStreamingBubble() {
+  hideEmpty();
+  const id  = 'bubble-' + Date.now();
+  const row = document.createElement('div');
+  row.className = 'msg bot';
+  row.innerHTML = `
+    <div class="bubble-wrap">
+      <span class="bubble-label">AI</span>
+      <div class="bubble" id="${id}"></div>
+    </div>`;
+  chatArea.appendChild(row);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return id;
+}
+
+function updateStreamingBubble(id, rawText) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // During streaming: show plain text with a blinking cursor
+  // escHtml to stay safe, newlines to <br>
+  el.innerHTML = escHtml(rawText).replace(/\n/g, '<br>') + '<span class="stream-cursor">▍</span>';
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function finalizeStreamingBubble(id, rawText, sources) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  // Full markdown render now that text is complete
+  let html = renderMarkdown(rawText);
+
+  // Attach sources if present
+  if (sources && sources.length) {
+    html += '<div class="sources"><div class="sources-label">Sources in video</div>' +
+      sources.map(s =>
+        `<a class="source-chip" href="${s.yt_link.replace(/"/g,'%22')}" target="_blank" rel="noopener">
+          <span class="source-ts">${escHtml(s.timestamp)}</span>
+          <span class="source-preview">${escHtml(s.preview)}</span>
+        </a>`
+      ).join('') + '</div>';
+  }
+
+  el.innerHTML = html;
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function appendThinking() {
+  const id = 'th-' + Date.now();
+  const row = document.createElement('div');
+  row.className = 'msg bot'; row.id = id;
+  row.innerHTML = `
+    <div class="bubble-wrap">
+      <span class="bubble-label">AI</span>
+      <div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div>
+    </div>`;
+  chatArea.appendChild(row);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return id;
+}
+
+function removeThinking(id) { const e = document.getElementById(id); if(e) e.remove(); }
+
+function appendErrorMsg(text) {
+  const d = document.createElement('div');
+  d.className = 'error-msg'; d.textContent = '⚠ ' + text;
+  chatArea.appendChild(d);
+}
+
+function showError(text) { hideEmpty(); progressArea.classList.remove('visible'); appendErrorMsg(text); }
+function resetInputUI()  { urlInput.disabled = loadBtn.disabled = false; progressArea.classList.remove('visible'); setStatus('idle','Idle'); }
+
+// ── Escape + Markdown ─────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderMarkdown(raw) {
+  let s = escHtml(raw);
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  const lines = s.split('\n');
+  const out = []; let buf = [], tag = '';
+  function flush() {
+    if (!buf.length) return;
+    out.push(`<${tag}>${buf.map(i=>`<li>${i}</li>`).join('')}</${tag}>`);
+    buf = []; tag = '';
+  }
+  for (const line of lines) {
+    const ul = line.match(/^\s*[-*]\s+(.+)/);
+    const ol = line.match(/^\s*\d+[.)]\s+(.+)/);
+    if      (ul) { if(tag&&tag!=='ul') flush(); tag='ul'; buf.push(ul[1].trim()); }
+    else if (ol) { if(tag&&tag!=='ol') flush(); tag='ol'; buf.push(ol[1].trim()); }
+    else         { flush(); out.push(line); }
+  }
+  flush();
+  return out.join('\n').split(/\n{2,}/).map(p => {
+    p = p.trim();
+    if (!p) return '';
+    if (p.startsWith('<ul>')||p.startsWith('<ol>')) return p;
+    return '<p>' + p.replace(/\n/g,'<br>') + '</p>';
+  }).join('');
+}
+
+urlInput.addEventListener('keydown', e => { if(e.key==='Enter') loadVideo(); });
+
+// ── Init ──────────────────────────────────────────────────
+(async () => {
+  try {
+    const data = await (await fetch('/api/status')).json();
+    if      (data.status==='ready' && data.video_url) { urlInput.value = data.video_url; onReady(data.video_url); }
+    else if (data.status==='processing')              { urlInput.value = data.video_url||''; urlInput.disabled=loadBtn.disabled=true; progressArea.classList.add('visible'); setStatus('processing','Processing'); startPolling(); }
+  } catch(_) {}
+})();
+</script>
+</body>
+</html>

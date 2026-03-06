@@ -65,7 +65,7 @@ ollama run llama3.1
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/youtube-insight-rag.git
+git clone https://github.com/DIN05AUR/Youtube_Insight_RAG.git
 cd youtube-insight-rag
 
 # 2. Create a virtual environment (recommended)
